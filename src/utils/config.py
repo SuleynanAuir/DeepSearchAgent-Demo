@@ -21,14 +21,38 @@ class Config:
     deepseek_model: str = "deepseek-chat"
     openai_model: str = "gpt-4o-mini"
     
-    # 搜索配置
-    max_search_results: int = 3
+    # 基础搜索配置
+    max_search_results: int = 5
     search_timeout: int = 240
     max_content_length: int = 20000
+    
+    # 搜索策略
+    search_strategy: str = "balanced"   # fast / balanced / deep
+    enable_search_expansion: bool = True
+    enable_semantic_search: bool = True
+    enable_multi_language_search: bool = True
+    
+    # 搜索优化参数
+    search_query_expansion_count: int = 3
+    min_content_quality_score: float = 0.3
+    dedup_similarity_threshold: float = 0.7
     
     # Agent配置
     max_reflections: int = 2
     max_paragraphs: int = 5
+    enable_iterative_refinement: bool = True
+    refinement_depth: int = 2
+    
+    # 搜索过滤
+    filter_by_date: bool = True
+    days_back: int = 90
+    filter_by_source_credibility: bool = True
+    min_source_credibility: float = 0.5
+    
+    # 搜索优先级和验证
+    search_priority_mode: str = "relevance"  # relevance / recency / authority
+    enable_fact_checking: bool = True
+    enable_source_verification: bool = True
     
     # 输出配置
     output_dir: str = "reports"
@@ -70,11 +94,27 @@ class Config:
                 default_llm_provider=getattr(config_module, "DEFAULT_LLM_PROVIDER", "deepseek"),
                 deepseek_model=getattr(config_module, "DEEPSEEK_MODEL", "deepseek-chat"),
                 openai_model=getattr(config_module, "OPENAI_MODEL", "gpt-4o-mini"),
-                max_search_results=getattr(config_module, "SEARCH_RESULTS_PER_QUERY", 3),
+                max_search_results=getattr(config_module, "SEARCH_RESULTS_PER_QUERY", 5),
                 search_timeout=getattr(config_module, "SEARCH_TIMEOUT", 240),
                 max_content_length=getattr(config_module, "SEARCH_CONTENT_MAX_LENGTH", 20000),
+                search_strategy=getattr(config_module, "SEARCH_STRATEGY", "balanced"),
+                enable_search_expansion=getattr(config_module, "ENABLE_SEARCH_EXPANSION", True),
+                enable_semantic_search=getattr(config_module, "ENABLE_SEMANTIC_SEARCH", True),
+                enable_multi_language_search=getattr(config_module, "ENABLE_MULTI_LANGUAGE_SEARCH", True),
+                search_query_expansion_count=getattr(config_module, "SEARCH_QUERY_EXPANSION_COUNT", 3),
+                min_content_quality_score=getattr(config_module, "MIN_CONTENT_QUALITY_SCORE", 0.3),
+                dedup_similarity_threshold=getattr(config_module, "DEDUP_SIMILARITY_THRESHOLD", 0.7),
                 max_reflections=getattr(config_module, "MAX_REFLECTIONS", 2),
                 max_paragraphs=getattr(config_module, "MAX_PARAGRAPHS", 5),
+                enable_iterative_refinement=getattr(config_module, "ENABLE_ITERATIVE_REFINEMENT", True),
+                refinement_depth=getattr(config_module, "REFINEMENT_DEPTH", 2),
+                filter_by_date=getattr(config_module, "FILTER_BY_DATE", True),
+                days_back=getattr(config_module, "DAYS_BACK", 90),
+                filter_by_source_credibility=getattr(config_module, "FILTER_BY_SOURCE_CREDIBILITY", True),
+                min_source_credibility=getattr(config_module, "MIN_SOURCE_CREDIBILITY", 0.5),
+                search_priority_mode=getattr(config_module, "SEARCH_PRIORITY_MODE", "relevance"),
+                enable_fact_checking=getattr(config_module, "ENABLE_FACT_CHECKING", True),
+                enable_source_verification=getattr(config_module, "ENABLE_SOURCE_VERIFICATION", True),
                 output_dir=getattr(config_module, "OUTPUT_DIR", "reports"),
                 save_intermediate_states=getattr(config_module, "SAVE_INTERMEDIATE_STATES", True)
             )
@@ -97,11 +137,27 @@ class Config:
                 default_llm_provider=config_dict.get("DEFAULT_LLM_PROVIDER", "deepseek"),
                 deepseek_model=config_dict.get("DEEPSEEK_MODEL", "deepseek-chat"),
                 openai_model=config_dict.get("OPENAI_MODEL", "gpt-4o-mini"),
-                max_search_results=int(config_dict.get("SEARCH_RESULTS_PER_QUERY", "3")),
+                max_search_results=int(config_dict.get("SEARCH_RESULTS_PER_QUERY", "5")),
                 search_timeout=int(config_dict.get("SEARCH_TIMEOUT", "240")),
                 max_content_length=int(config_dict.get("SEARCH_CONTENT_MAX_LENGTH", "20000")),
+                search_strategy=config_dict.get("SEARCH_STRATEGY", "balanced"),
+                enable_search_expansion=config_dict.get("ENABLE_SEARCH_EXPANSION", "true").lower() == "true",
+                enable_semantic_search=config_dict.get("ENABLE_SEMANTIC_SEARCH", "true").lower() == "true",
+                enable_multi_language_search=config_dict.get("ENABLE_MULTI_LANGUAGE_SEARCH", "true").lower() == "true",
+                search_query_expansion_count=int(config_dict.get("SEARCH_QUERY_EXPANSION_COUNT", "3")),
+                min_content_quality_score=float(config_dict.get("MIN_CONTENT_QUALITY_SCORE", "0.3")),
+                dedup_similarity_threshold=float(config_dict.get("DEDUP_SIMILARITY_THRESHOLD", "0.7")),
                 max_reflections=int(config_dict.get("MAX_REFLECTIONS", "2")),
                 max_paragraphs=int(config_dict.get("MAX_PARAGRAPHS", "5")),
+                enable_iterative_refinement=config_dict.get("ENABLE_ITERATIVE_REFINEMENT", "true").lower() == "true",
+                refinement_depth=int(config_dict.get("REFINEMENT_DEPTH", "2")),
+                filter_by_date=config_dict.get("FILTER_BY_DATE", "true").lower() == "true",
+                days_back=int(config_dict.get("DAYS_BACK", "90")),
+                filter_by_source_credibility=config_dict.get("FILTER_BY_SOURCE_CREDIBILITY", "true").lower() == "true",
+                min_source_credibility=float(config_dict.get("MIN_SOURCE_CREDIBILITY", "0.5")),
+                search_priority_mode=config_dict.get("SEARCH_PRIORITY_MODE", "relevance"),
+                enable_fact_checking=config_dict.get("ENABLE_FACT_CHECKING", "true").lower() == "true",
+                enable_source_verification=config_dict.get("ENABLE_SOURCE_VERIFICATION", "true").lower() == "true",
                 output_dir=config_dict.get("OUTPUT_DIR", "reports"),
                 save_intermediate_states=config_dict.get("SAVE_INTERMEDIATE_STATES", "true").lower() == "true"
             )
@@ -148,15 +204,42 @@ def print_config(config: Config):
     print(f"LLM提供商: {config.default_llm_provider}")
     print(f"DeepSeek模型: {config.deepseek_model}")
     print(f"OpenAI模型: {config.openai_model}")
+    
+    print("\n--- 搜索配置 ---")
     print(f"最大搜索结果数: {config.max_search_results}")
     print(f"搜索超时: {config.search_timeout}秒")
     print(f"最大内容长度: {config.max_content_length}")
+    print(f"搜索策略: {config.search_strategy}")
+    print(f"启用搜索扩展: {config.enable_search_expansion}")
+    print(f"启用语义搜索: {config.enable_semantic_search}")
+    print(f"启用多语言搜索: {config.enable_multi_language_search}")
+    print(f"查询扩展数量: {config.search_query_expansion_count}")
+    print(f"最小内容质量分数: {config.min_content_quality_score}")
+    print(f"去重相似度阈值: {config.dedup_similarity_threshold}")
+    
+    print("\n--- 优化配置 ---")
     print(f"最大反思次数: {config.max_reflections}")
     print(f"最大段落数: {config.max_paragraphs}")
+    print(f"启用迭代优化: {config.enable_iterative_refinement}")
+    print(f"优化深度: {config.refinement_depth}")
+    
+    print("\n--- 过滤配置 ---")
+    print(f"按日期过滤: {config.filter_by_date}")
+    print(f"搜索回溯天数: {config.days_back}")
+    print(f"按来源可信度过滤: {config.filter_by_source_credibility}")
+    print(f"最小来源可信度: {config.min_source_credibility}")
+    
+    print("\n--- 优先级与验证 ---")
+    print(f"搜索优先级模式: {config.search_priority_mode}")
+    print(f"启用事实检验: {config.enable_fact_checking}")
+    print(f"启用来源验证: {config.enable_source_verification}")
+    
+    print("\n--- 输出配置 ---")
     print(f"输出目录: {config.output_dir}")
     print(f"保存中间状态: {config.save_intermediate_states}")
     
     # 显示API密钥状态（不显示实际密钥）
+    print("\n--- API密钥状态 ---")
     print(f"DeepSeek API Key: {'已设置' if config.deepseek_api_key else '未设置'}")
     print(f"OpenAI API Key: {'已设置' if config.openai_api_key else '未设置'}")
     print(f"Tavily API Key: {'已设置' if config.tavily_api_key else '未设置'}")

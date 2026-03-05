@@ -70,6 +70,9 @@ class DeepSeekLLM(BaseLLM):
             # 调用API
             response = self.client.chat.completions.create(**params)
             
+            # 存储usage信息供后续查询
+            self.last_usage = getattr(response, 'usage', None)
+            
             # 提取回复内容
             if response.choices and response.choices[0].message:
                 content = response.choices[0].message.content
@@ -80,6 +83,15 @@ class DeepSeekLLM(BaseLLM):
         except Exception as e:
             print(f"DeepSeek API调用错误: {str(e)}")
             raise e
+    
+    def get_last_usage(self) -> Dict[str, int]:
+        """获取最后一次调用的token使用情况"""
+        if hasattr(self, 'last_usage') and self.last_usage:
+            return {
+                "prompt_tokens": self.last_usage.prompt_tokens,
+                "completion_tokens": self.last_usage.completion_tokens
+            }
+        return {"prompt_tokens": 0, "completion_tokens": 0}
     
     def get_model_info(self) -> Dict[str, Any]:
         """

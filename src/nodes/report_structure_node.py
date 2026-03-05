@@ -77,32 +77,86 @@ class ReportStructureNode(StateMutationNode):
             cleaned_output = remove_reasoning_from_output(output)
             cleaned_output = clean_json_tags(cleaned_output)
             
+            self.log_info(f"清理后的输出前200字符: {cleaned_output[:200]}")
+            
             # 解析JSON
+            report_structure = None
             try:
                 report_structure = json.loads(cleaned_output)
-            except JSONDecodeError:
+            except JSONDecodeError as e:
+                self.log_error(f"JSON解析失败: {str(e)}")
                 # 使用更强大的提取方法
-                report_structure = extract_clean_response(cleaned_output)
-                if "error" in report_structure:
-                    raise ValueError("JSON解析失败")
+                extracted = extract_clean_response(cleaned_output)
+                
+                # 检查提取结果
+                if isinstance(extracted, dict):
+                    if "error" in extracted:
+                        self.log_error("JSON提取失败，使用默认结构")
+                        report_structure = None
+                    elif isinstance(extracted, dict) and len(extracted) > 0:
+                        # 如果是单个对象，转换为列表
+                        report_structure = [extracted]
+                    else:
+                        report_structure = None
+                elif isinstance(extracted, list):
+                    report_structure = extracted
+                else:
+                    report_structure = None
+            
+            # 如果解析失败，返回默认结构
+            if report_structure is None:
+                self.log_error("无法解析报告结构，使用默认结构")
+                return [
+                    {
+                        "title": "概述",
+                        "content": f"对'{self.query}'的总体概述和背景介绍"
+                    },
+                    {
+                        "title": "详细分析", 
+                        "content": f"深入分析'{self.query}'的相关内容"
+                    },
+                    {
+                        "title": "总结",
+                        "content": f"对'{self.query}'的总结和展望"
+                    }
+                ]
             
             # 验证结构
             if not isinstance(report_structure, list):
-                raise ValueError("报告结构应该是一个列表")
+                # 如果不是列表，尝试转换
+                if isinstance(report_structure, dict):
+                    report_structure = [report_structure]
+                else:
+                    raise ValueError("报告结构应该是一个列表")
             
             # 验证每个段落
             validated_structure = []
             for i, paragraph in enumerate(report_structure):
                 if not isinstance(paragraph, dict):
+                    self.log_error(f"段落 {i+1} 不是字典类型，跳过")
                     continue
                 
-                title = paragraph.get("title", f"段落 {i+1}")
-                content = paragraph.get("content", "")
+                title = str(paragraph.get("title", f"段落 {i+1}"))
+                content = str(paragraph.get("content", ""))
                 
                 validated_structure.append({
                     "title": title,
                     "content": content
                 })
+            
+            # 如果没有有效段落，返回默认结构
+            if not validated_structure:
+                self.log_error("没有有效段落，使用默认结构")
+                return [
+                    {
+                        "title": "概述",
+                        "content": f"对'{self.query}'的总体概述和背景介绍"
+                    },
+                    {
+                        "title": "详细分析", 
+                        "content": f"深入分析'{self.query}'的相关内容"
+                    }
+                ]
             
             return validated_structure
             

@@ -18,6 +18,7 @@ class Search:
     content: str = ""                  # 搜索返回的内容
     score: Optional[float] = None      # 相关度评分
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+    quality_metrics: Optional[Dict[str, Any]] = None  # 搜索质量指标
     
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
@@ -27,7 +28,8 @@ class Search:
             "title": self.title,
             "content": self.content,
             "score": self.score,
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
+            "quality_metrics": self.quality_metrics
         }
     
     @classmethod
@@ -39,7 +41,8 @@ class Search:
             title=data.get("title", ""),
             content=data.get("content", ""),
             score=data.get("score"),
-            timestamp=data.get("timestamp", datetime.now().isoformat())
+            timestamp=data.get("timestamp", datetime.now().isoformat()),
+            quality_metrics=data.get("quality_metrics")
         )
 
 
@@ -55,15 +58,16 @@ class Research:
         """添加搜索记录"""
         self.search_history.append(search)
     
-    def add_search_results(self, query: str, results: List[Dict[str, Any]]):
-        """批量添加搜索结果"""
+    def add_search_results(self, query: str, results: List[Dict[str, Any]], quality_metrics: Optional[Dict[str, Any]] = None):
+        """批量添加搜索结果（支持质量指标）"""
         for result in results:
             search = Search(
                 query=query,
                 url=result.get("url", ""),
                 title=result.get("title", ""),
                 content=result.get("content", ""),
-                score=result.get("score")
+                score=result.get("score"),
+                quality_metrics=quality_metrics  # 所有结果共享同一份质量指标
             )
             self.add_search(search)
     
@@ -149,6 +153,9 @@ class State:
     is_completed: bool = False                                     # 是否完成
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    
+    # 指标相关字段
+    metrics: Optional[Dict[str, Any]] = None                       # 研究指标（来自visualization模块）
     
     def add_paragraph(self, title: str, content: str) -> int:
         """
