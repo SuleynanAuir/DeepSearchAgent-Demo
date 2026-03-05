@@ -1,4 +1,4 @@
-# 🔍 CognitiveTemp Agents
+# CognitiveTemp DeepSearch Agents: Temperature-Driven Multi-Agent Deep Search with Iterative Reflection and Adaptive Reasoning
 
 <div align="center">
 
